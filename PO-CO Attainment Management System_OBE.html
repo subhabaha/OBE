@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PO-CO Attainment System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* blue-500 */
+            --primary-hover: #2563eb; /* blue-600 */
+            --secondary-color: #10b981; /* emerald-500 */
+            --secondary-hover: #059669; /* emerald-600 */
+            --neutral-bg: #f9fafb; /* gray-50 */
+            --text-primary: #1f2937; /* gray-800 */
+            --text-secondary: #4b5563; /* gray-600 */
+            --border-color: #e5e7eb; /* gray-200 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--neutral-bg);
+            color: var(--text-primary);
+            background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 100%);
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .table-input {
+            width: 60px;
+            text-align: center;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+        .table-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .table-input:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .progress-bar-step {
+            transition: all 0.3s ease-in-out;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background-color: #e5e7eb;
+        }
+        .progress-bar-step.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+        .progress-bar-step.completed {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .loader {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-secondary:hover { background-color: var(--secondary-hover); }
+        .btn-neutral { background-color: #ffffff; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-neutral:hover { background-color: #f9fafb; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-7xl mx-auto">
+        <!-- Role Selection -->
+        <div id="role-selection" class="text-center p-12 bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl transition-all">
+            <h1 class="text-5xl font-bold text-gray-800 mb-3">Outcome Based Education Portal</h1>
+            <p class="text-gray-600 mb-12 text-xl">A unified system for CO & PO Attainment Management</p>
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Select Your Role to Begin</h2>
+            <div class="flex justify-center gap-6">
+                <button onclick="selectRole('faculty')" class="btn btn-primary text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-5.197-5.977" /></svg>
+                    <span>Faculty / Instructor</span>
+                </button>
+                <button onclick="selectRole('coordinator')" class="btn btn-secondary text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                    <span>OBE Coordinator</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Faculty Portal -->
+        <div id="faculty-portal" class="hidden">
+             <button onclick="goBackToRoleSelection()" class="btn btn-neutral mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <span>Back to Role Selection</span>
+            </button>
+            <div id="progress-bar" class="mb-8 flex flex-wrap justify-between items-center w-full bg-white/50 backdrop-blur-sm p-2 rounded-full shadow-md gap-2">
+                <!-- Progress steps will be injected here by JS -->
+            </div>
+
+            <div id="form-container" class="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-2xl shadow-xl">
+                <!-- All faculty pages will be injected here -->
+                <div id="page-1" class="page"></div>
+                <div id="page-2" class="page"></div>
+                <div id="page-3" class="page"></div>
+                <div id="page-4" class="page"></div>
+                <div id="page-5" class="page"></div>
+                <div id="page-6" class="page"></div>
+                <div id="page-7" class="page"></div>
+                <div id="page-8" class="page"></div>
+                <div id="page-9" class="page"></div>
+                
+                <!-- Navigation Buttons -->
+                <div id="navigation-buttons" class="mt-8 pt-6 border-t border-gray-200 flex justify-between">
+                    <button id="prev-btn" onclick="navigate(-1)" class="btn btn-neutral">Previous</button>
+                    <button id="next-btn" onclick="navigate(1)" class="btn btn-primary">Next</button>
+                    <button id="submit-btn" onclick="submitForm()" class="btn btn-secondary hidden">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- OBE Coordinator Portal -->
+        <div id="coordinator-portal" class="hidden">
+            <button onclick="goBackToRoleSelection()" class="btn btn-neutral mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <span>Back to Role Selection</span>
+            </button>
+            <div id="coordinator-dashboard-content" class="bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl">
+                <div class="text-center p-8" id="data-loader">
+                    <div class="loader mx-auto"></div>
+                    <p class="mt-4 text-gray-600 text-lg">Loading all submission data...</p>
+                </div>
+                <div id="coordinator-controls" class="hidden">
+                    <h2 class="text-3xl font-bold mb-4">Coordinator Dashboard</h2>
+                    <p class="text-gray-600 mb-8 text-lg">Download reports based on specific criteria or download all available data.</p>
+                    
+                    <div class="border border-gray-200 rounded-xl p-6 mb-8 bg-white/50">
+                        <h3 class="text-xl font-semibold mb-4">Filtered Report</h3>
+                        <div class="grid md:grid-cols-3 gap-6">
+                             <div><label for="report-program" class="block text-sm font-medium mb-1">Program</label><select id="report-program" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>
+                             <div><label for="report-batch" class="block text-sm font-medium mb-1">Batch</label><select id="report-batch" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>
+                             <div><label for="report-session" class="block text-sm font-medium mb-1">Session</label><select id="report-session" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>
+                        </div>
+                        <div class="text-center mt-6">
+                            <button id="generate-report-btn" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                <span>Download Filtered Report</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-xl p-6 bg-white/50">
+                        <h3 class="text-xl font-semibold mb-3">Complete Data Dump</h3>
+                        <p class="text-gray-600 mb-4">This will download an Excel file containing every submission from the database.</p>
+                        <div class="text-center">
+                             <button id="generate-full-report-btn" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                <span>Download All Data</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal for messages -->
+        <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center" >
+            <div class="relative mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white">
+                <div class="mt-3 text-center">
+                    <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                         <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    </div>
+                    <h3 id="modal-title" class="text-xl leading-6 font-bold text-gray-900 mt-4"></h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p id="modal-message" class="text-md text-gray-600"></p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="modal-ok-btn" class="btn btn-primary w-full">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const API_BASE_URL = 'https://101.53.149.101:3003/api';
+
+        // --- GLOBAL STATE ---
+        let currentPage = 1;
+        const totalPages = 9;
+        let formData = {};
+        const PO_COUNT = 12;
+        const MAX_CO_COUNT = 6; // **CHANGE**: Max COs for report generation is now 6
+        let allData = null; // Will hold the entire dataset for the coordinator
+
+        const progressSteps = [
+            "Program", "Batch", "Session", "Subject", "COs", "Mapping", "Calculation", "Final Attainment", "Done"
+        ];
+
+        // --- UI FUNCTIONS ---
+        function showModal(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('message-modal').style.display = 'flex';
+        }
+        
+        document.getElementById('modal-ok-btn').addEventListener('click', () => {
+            document.getElementById('message-modal').style.display = 'none';
+        });
+
+        function populateDropdown(elementId, data, placeholder, valueKey = 'id', textKey = 'name') {
+            const select = document.getElementById(elementId);
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+            if (!data) return;
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                select.appendChild(option);
+            });
+        }
+
+        // --- ROLE SELECTION & INITIALIZATION ---
+        window.selectRole = function(role) {
+            document.getElementById('role-selection').style.display = 'none';
+            if (role === 'faculty') {
+                document.getElementById('faculty-portal').style.display = 'block';
+            } else {
+                document.getElementById('coordinator-portal').style.display = 'block';
+                if (!allData) { 
+                    loadFullDataset();
+                }
+            }
+        }
+
+        window.goBackToRoleSelection = function() {
+            document.getElementById('coordinator-portal').style.display = 'none';
+            document.getElementById('faculty-portal').style.display = 'none';
+            document.getElementById('role-selection').style.display = 'block';
+            resetForm();
+        }
+
+        // --- FACULTY PORTAL LOGIC ---
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.innerHTML = '';
+            progressSteps.forEach((step, index) => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'progress-bar-step flex-1 text-center text-xs md:text-sm';
+                if (index + 1 < currentPage) {
+                    stepEl.classList.add('completed');
+                } else if (index + 1 === currentPage) {
+                    stepEl.classList.add('active');
+                }
+                stepEl.textContent = step;
+                progressBar.appendChild(stepEl);
+            });
+        }
+
+        function showPage(pageNumber) {
+            document.querySelectorAll('#faculty-portal .page').forEach(page => page.classList.remove('active'));
+            const newPageElement = document.getElementById(`page-${pageNumber}`);
+            if (newPageElement) {
+                newPageElement.classList.add('active');
+                currentPage = pageNumber;
+                updateProgressBar();
+                updateNavigationButtons();
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+
+            prevBtn.style.display = (currentPage > 1 && currentPage < totalPages) ? 'inline-flex' : 'none';
+            nextBtn.style.display = (currentPage < totalPages - 1) ? 'inline-flex' : 'none';
+            submitBtn.style.display = (currentPage === totalPages - 1) ? 'inline-flex' : 'none';
+            
+            nextBtn.disabled = !isPageValid(currentPage);
+            submitBtn.disabled = !isPageValid(currentPage);
+        }
+        
+        function renderFacultyPages() {
+            document.getElementById('page-1').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 1: Select Program</h2><p class="text-gray-600 mb-6">Choose the academic program you are recording data for.</p><div class="max-w-md"><label for="program" class="block text-sm font-medium text-gray-700 mb-2">Program</label><select id="program" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>`;
+            document.getElementById('page-2').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 2: Select Batch</h2><p class="text-gray-600 mb-6">Specify the student batch.</p><div class="max-w-md"><label for="batch" class="block text-sm font-medium text-gray-700 mb-2">Batch</label><select id="batch" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>`;
+            document.getElementById('page-3').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 3: Select Session</h2><p class="text-gray-600 mb-6">Choose the academic session or term.</p><div class="max-w-md"><label for="session" class="block text-sm font-medium text-gray-700 mb-2">Session</label><select id="session" class="w-full p-3 border border-gray-300 rounded-lg"></select></div>`;
+            document.getElementById('page-4').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 4: Select Faculty & Subject</h2><p class="text-gray-600 mb-6">Select your name and then choose the assigned subject.</p><div class="grid md:grid-cols-2 gap-6"><div><label for="faculty" class="block text-sm font-medium text-gray-700 mb-2">Faculty Name</label><select id="faculty" class="w-full p-3 border border-gray-300 rounded-lg"></select></div><div><label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label><select id="subject" class="w-full p-3 border border-gray-300 rounded-lg" disabled></select></div></div>`;
+            document.getElementById('page-5').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 5: Define Course Outcomes (COs)</h2><p class="text-gray-600 mb-6">Enter the total number of COs for this subject (max ${MAX_CO_COUNT}).</p><div class="max-w-md"><label for="numCOs" class="block text-sm font-medium text-gray-700 mb-2">Number of COs</label><input type="number" id="numCOs" min="1" max="${MAX_CO_COUNT}" class="w-full p-3 border border-gray-300 rounded-lg"></div>`;
+            document.getElementById('page-6').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 6: Articulation Matrix (CO-PO Mapping)</h2><p class="text-gray-600 mb-6">For each CO, check the relevant POs and enter the correlation strength (1: Low, 2: Medium, 3: High).</p><div id="articulation-matrix-container" class="overflow-x-auto"></div><div class="mt-6 flex items-center"><input type="checkbox" id="confirm-articulation" class="h-4 w-4"><label for="confirm-articulation" class="ml-2 block text-sm">I have entered the CO-PO mapping as per the course handout.</label></div>`;
+            document.getElementById('page-7').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 7: Attainment Calculation</h2><p class="text-gray-600 mb-6">Enter the attainment percentages for each CO.</p><div id="attainment-calc-container" class="overflow-x-auto"></div><div class="mt-6 flex items-center"><input type="checkbox" id="confirm-attainment-calc" class="h-4 w-4"><label for="confirm-attainment-calc" class="ml-2 block text-sm">The data entered and calculated is correct.</label></div>`;
+            document.getElementById('page-8').innerHTML = `<h2 class="text-2xl font-semibold mb-4">Step 8: Final Attainment Matrix</h2><p class="text-gray-600 mb-6">Enter the final attainment value for each mapped CO-PO combination (max 3.0).</p><div id="final-attainment-container" class="overflow-x-auto"></div><div class="mt-6 flex items-center"><input type="checkbox" id="confirm-final-submission" class="h-4 w-4"><label for="confirm-final-submission" class="ml-2 block text-sm">I have entered data minutely and confirm the submission.</label></div>`;
+            document.getElementById('page-9').innerHTML = `<div class="text-center"><div id="submission-loader" class="loader mx-auto mb-4 hidden"></div><svg id="submission-success-icon" class="mx-auto h-24 w-24 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h2 id="submission-status-title" class="mt-4 text-3xl font-bold"></h2><p id="submission-status-message" class="text-gray-600 mt-2 text-lg"></p><button onclick="resetForm()" class="mt-8 btn btn-primary">Enter Data for Another Course</button></div>`;
+        }
+
+
+        function renderArticulationMatrix() {
+            const container = document.getElementById('articulation-matrix-container');
+            const numCOs = parseInt(formData.numCOs) || 0;
+            if (numCOs === 0) {
+                container.innerHTML = '<p class="text-red-500">Please enter a valid number of COs first.</p>';
+                return;
+            }
+
+            let table = `<table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CO</th>`;
+            for (let i = 1; i <= PO_COUNT; i++) {
+                table += `<th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">PO${i}</th>`;
+            }
+            table += `</tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            for (let i = 1; i <= numCOs; i++) {
+                table += `<tr><td class="px-6 py-4 whitespace-nowrap font-bold">CO${i}</td>`;
+                for (let j = 1; j <= PO_COUNT; j++) {
+                    table += `<td class="px-2 py-4 text-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <input type="checkbox" id="check-co${i}-po${j}" class="co-po-checkbox h-4 w-4" data-co="${i}" data-po="${j}">
+                            <input type="number" id="input-co${i}-po${j}" class="table-input co-po-input" data-co="${i}" data-po="${j}" min="1" max="3" disabled>
+                        </div>
+                    </td>`;
+                }
+                table += `</tr>`;
+            }
+
+            table += `</tbody></table>`;
+            container.innerHTML = table;
+        }
+
+        function renderAttainmentCalculations() {
+            const container = document.getElementById('attainment-calc-container');
+            const numCOs = parseInt(formData.numCOs) || 0;
+            if (numCOs === 0) return;
+
+            let table = `<table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">CO</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Attainment (Internal)</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Attainment (External)</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Indirect Attainment</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Direct (60I+40E)</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total (80D+20I)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">`;
+            
+            for (let i = 1; i <= numCOs; i++) {
+                table += `<tr>
+                    <td class="px-4 py-4 font-bold">CO${i}</td>
+                    <td><input type="number" id="internal-co${i}" data-co="${i}" class="w-full p-2 border rounded attainment-input"></td>
+                    <td><input type="number" id="external-co${i}" data-co="${i}" class="w-full p-2 border rounded attainment-input"></td>
+                    <td><input type="number" id="indirect-co${i}" data-co="${i}" class="w-full p-2 border rounded attainment-input"></td>
+                    <td><input type="text" id="direct-co${i}" class="w-full p-2 border rounded bg-gray-100" readonly></td>
+                    <td><input type="text" id="total-co${i}" class="w-full p-2 border rounded bg-gray-100" readonly></td>
+                </tr>`;
+            }
+
+            table += `</tbody></table>`;
+            container.innerHTML = table;
+        }
+
+        function renderFinalAttainmentMatrix() {
+            const container = document.getElementById('final-attainment-container');
+            const numCOs = parseInt(formData.numCOs) || 0;
+            if (numCOs === 0) return;
+
+            collectArticulationMatrixData();
+
+            let table = `<table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CO</th>`;
+            for (let i = 1; i <= PO_COUNT; i++) {
+                table += `<th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase">PO${i}</th>`;
+            }
+            table += `</tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            for (let i = 1; i <= numCOs; i++) {
+                table += `<tr><td class="px-6 py-4 whitespace-nowrap font-bold">CO${i}</td>`;
+                for (let j = 1; j <= PO_COUNT; j++) {
+                    const isMapped = formData.articulationMatrix && formData.articulationMatrix[`CO${i}-PO${j}`];
+                    table += `<td class="px-2 py-4 text-center">
+                        <input type="number" step="0.01" max="3.0" id="final-co${i}-po${j}" data-co="${i}" data-po="${j}" class="table-input final-attainment-input" ${!isMapped ? 'disabled' : ''}>
+                    </td>`;
+                }
+                table += `</tr>`;
+            }
+            
+            table += `<tr class="bg-gray-100 font-bold"><td class="px-6 py-4">PO Totals</td>`;
+            for (let j = 1; j <= PO_COUNT; j++) {
+                table += `<td class="px-2 py-4 text-center"><input type="text" id="po-total-${j}" class="table-input" readonly></td>`;
+            }
+            table += `</tr></tbody></table>`;
+            container.innerHTML = table;
+        }
+
+        function calculateAttainment(coIndex) {
+            const internal = parseFloat(document.getElementById(`internal-co${coIndex}`).value) || 0;
+            const external = parseFloat(document.getElementById(`external-co${coIndex}`).value) || 0;
+            const indirect = parseFloat(document.getElementById(`indirect-co${coIndex}`).value) || 0;
+
+            const direct = (0.6 * internal) + (0.4 * external);
+            const total = (0.8 * direct) + (0.2 * indirect);
+
+            document.getElementById(`direct-co${coIndex}`).value = direct.toFixed(2);
+            document.getElementById(`total-co${coIndex}`).value = total.toFixed(2);
+        }
+        
+        function calculatePOTotals() {
+            for (let j = 1; j <= PO_COUNT; j++) {
+                let total = 0;
+                for (let i = 1; i <= formData.numCOs; i++) {
+                    const val = parseFloat(document.getElementById(`final-co${i}-po${j}`).value) || 0;
+                    total += val;
+                }
+                const cappedTotal = Math.min(total, 3.0);
+                document.getElementById(`po-total-${j}`).value = cappedTotal.toFixed(2);
+            }
+        }
+        
+        function collectArticulationMatrixData() {
+            formData.articulationMatrix = {};
+            document.querySelectorAll('.co-po-input').forEach(input => {
+                if (!input.disabled && input.value) {
+                    const co = input.dataset.co;
+                    const po = input.dataset.po;
+                    formData.articulationMatrix[`CO${co}-PO${po}`] = parseInt(input.value);
+                }
+            });
+        }
+
+        function collectFullFormData() {
+            collectArticulationMatrixData();
+            formData.attainmentPercentages = [];
+            for(let i=1; i<=formData.numCOs; i++) {
+                formData.attainmentPercentages.push({
+                    co: `CO${i}`,
+                    internal: parseFloat(document.getElementById(`internal-co${i}`).value) || 0,
+                    external: parseFloat(document.getElementById(`external-co${i}`).value) || 0,
+                    indirect: parseFloat(document.getElementById(`indirect-co${i}`).value) || 0,
+                    direct: parseFloat(document.getElementById(`direct-co${i}`).value) || 0,
+                    total: parseFloat(document.getElementById(`total-co${i}`).value) || 0,
+                });
+            }
+            formData.finalAttainmentMatrix = {};
+            document.querySelectorAll('.final-attainment-input').forEach(input => {
+                if (!input.disabled && input.value) {
+                    const co = input.dataset.co;
+                    const po = input.dataset.po;
+                    formData.finalAttainmentMatrix[`CO${co}-PO${po}`] = parseFloat(input.value) || 0;
+                }
+            });
+            formData.poTotals = {};
+            for(let j=1; j<=PO_COUNT; j++) {
+                const totalValue = parseFloat(document.getElementById(`po-total-${j}`).value) || 0;
+                formData.poTotals[`PO${j}`] = totalValue;
+            }
+        }
+
+        function isPageValid(page) {
+            switch(page) {
+                case 1: return !!formData.program;
+                case 2: return !!formData.batch;
+                case 3: return !!formData.session;
+                case 4: return !!formData.faculty && !!formData.assignment;
+                case 5: return formData.numCOs > 0 && formData.numCOs <= MAX_CO_COUNT;
+                case 6: return document.getElementById('confirm-articulation').checked;
+                case 7: return document.getElementById('confirm-attainment-calc').checked;
+                case 8: return document.getElementById('confirm-final-submission').checked;
+                default: return true;
+            }
+        }
+
+        window.navigate = function(direction) {
+            if (!isPageValid(currentPage)) {
+                showModal("Validation Error", "Please complete all fields and check the confirmation box where applicable before proceeding.");
+                return;
+            }
+            const newPage = currentPage + direction;
+            if (direction > 0) {
+                 switch(newPage) {
+                    case 6: renderArticulationMatrix(); break;
+                    case 7: renderAttainmentCalculations(); break;
+                    case 8: renderFinalAttainmentMatrix(); break;
+                }
+            }
+            if (newPage > 0 && newPage <= totalPages) {
+                showPage(newPage);
+            }
+        }
+
+        window.submitForm = async function() {
+            if (!isPageValid(currentPage)) {
+                showModal("Validation Error", "Please check the final confirmation box to submit.");
+                return;
+            }
+            showPage(totalPages);
+            document.getElementById('submission-loader').classList.remove('hidden');
+            document.getElementById('submission-success-icon').classList.add('hidden');
+            document.getElementById('submission-status-title').textContent = 'Submitting...';
+            document.getElementById('submission-status-message').textContent = 'Please wait while we save your data.';
+            collectFullFormData();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/submissions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: `Server responded with status: ${response.status}` }));
+                    throw new Error(errorData.message || `An unknown error occurred.`);
+                }
+                const result = await response.json();
+                document.getElementById('submission-status-title').textContent = 'Submission Successful!';
+                document.getElementById('submission-status-message').textContent = 'Thank you. Your PO-CO attainment data has been recorded.';
+            } catch (error) {
+                console.error('Submission failed:', error);
+                document.getElementById('submission-status-title').textContent = 'Submission Failed';
+                document.getElementById('submission-status-message').textContent = 'There was an error saving your data. ' + error.message;
+            } finally {
+                document.getElementById('submission-loader').classList.add('hidden');
+                document.getElementById('submission-success-icon').classList.remove('hidden');
+            }
+        }
+
+        window.resetForm = function() {
+            formData = {};
+            currentPage = 1;
+            const form = document.getElementById('form-container');
+            if(form) form.reset();
+            document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+            const subjectDropdown = document.getElementById('subject');
+            if(subjectDropdown) {
+                subjectDropdown.disabled = true;
+                subjectDropdown.innerHTML = '<option value="">Select a subject</option>';
+            }
+            showPage(1);
+        }
+
+        async function loadSubjects() {
+            const subjectDropdown = document.getElementById('subject');
+            subjectDropdown.disabled = true;
+            populateDropdown('subject', [], 'Loading...');
+            const { faculty, program, batch, session } = formData;
+            if (faculty && program && batch && session) {
+                try {
+                    const params = new URLSearchParams({ facultyId: faculty.id, programId: program.id, batchId: batch.id, sessionId: session.id });
+                    const response = await fetch(`${API_BASE_URL}/subjects?${params}`);
+                    if (!response.ok) throw new Error('Failed to fetch subjects');
+                    const subjects = await response.json();
+                    const select = document.getElementById('subject');
+                    select.innerHTML = `<option value="">Select a subject</option>`;
+                    subjects.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.assignment_id;
+                        option.textContent = `${item.code} - ${item.name}`;
+                        option.dataset.subjectId = item.id;
+                        option.dataset.subjectCode = item.code;
+                        option.dataset.subjectName = item.name;
+                        select.appendChild(option);
+                    });
+                    subjectDropdown.disabled = subjects.length === 0;
+                    if (subjects.length === 0) { populateDropdown('subject', [], 'No subjects assigned'); }
+                } catch (error) {
+                    console.error(error);
+                    populateDropdown('subject', [], 'Error loading subjects');
+                }
+            } else {
+                populateDropdown('subject', [], 'Complete previous steps');
+            }
+            updateNavigationButtons();
+        }
+
+        async function init() {
+            renderFacultyPages();
+            try {
+                const response = await fetch(`${API_BASE_URL}/master-data`);
+                if (!response.ok) throw new Error('Failed to fetch initial data');
+                const data = await response.json();
+                populateDropdown('program', data.programs, 'Select a program');
+                populateDropdown('batch', data.batches, 'Select a batch');
+                populateDropdown('session', data.sessions, 'Select a session');
+                populateDropdown('faculty', data.faculties, 'Select a faculty');
+            } catch (error) {
+                console.error(error);
+                showModal('Connection Error', 'Could not connect to the server. Please ensure the backend server is running and try again.');
+            }
+            showPage(1);
+        }
+        
+        // --- EVENT LISTENERS for Faculty Form ---
+        document.getElementById('form-container').addEventListener('change', (e) => {
+            const { id, value, selectedIndex, options, dataset } = e.target;
+            switch(id) {
+                case 'program': formData.program = value ? { id: value, name: options[selectedIndex].text } : null; break;
+                case 'batch': formData.batch = value ? { id: value, name: options[selectedIndex].text } : null; break;
+                case 'session': formData.session = value ? { id: value, name: options[selectedIndex].text } : null; loadSubjects(); break;
+                case 'faculty': formData.faculty = value ? { id: value, name: options[selectedIndex].text } : null; loadSubjects(); break;
+                case 'subject': const opt = options[selectedIndex]; formData.assignment = value ? { id: value, subjectId: opt.dataset.subjectId, subjectCode: opt.dataset.subjectCode, subjectName: opt.dataset.subjectName } : null; break;
+                case 'confirm-articulation':
+                case 'confirm-attainment-calc':
+                case 'confirm-final-submission':
+                    updateNavigationButtons(); break;
+            }
+             if (e.target.classList.contains('co-po-checkbox')) {
+                const co = e.target.dataset.co;
+                const po = e.target.dataset.po;
+                document.getElementById(`input-co${co}-po${po}`).disabled = !e.target.checked;
+            }
+            if (e.target.classList.contains('attainment-input')) {
+                calculateAttainment(e.target.dataset.co);
+            }
+            updateNavigationButtons();
+        });
+
+        document.getElementById('form-container').addEventListener('input', (e) => {
+            const { id, value } = e.target;
+            if (id === 'numCOs') {
+                formData.numCOs = value ? parseInt(value) : 0;
+                updateNavigationButtons();
+            }
+            if (e.target.classList.contains('final-attainment-input')) {
+                if (parseFloat(value) > 3.0) {
+                    showModal('Invalid Input', 'Attainment value cannot be greater than 3.0.');
+                    e.target.value = ''; 
+                }
+                calculatePOTotals();
+            }
+        });
+
+        // --- COORDINATOR LOGIC ---
+        async function loadFullDataset() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/full-data-dump`);
+                if (!response.ok) throw new Error('Failed to fetch full dataset');
+                allData = await response.json();
+                populateDropdown('report-program', allData.programs, 'Select a program');
+                populateDropdown('report-batch', allData.batches, 'Select a batch');
+                populateDropdown('report-session', allData.sessions, 'Select a session');
+                document.getElementById('data-loader').classList.add('hidden');
+                document.getElementById('coordinator-controls').classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                document.getElementById('coordinator-dashboard-content').innerHTML = `<p class="text-center text-red-500">Could not load data from the server. Please check the connection and try again.</p>`;
+            }
+        }
+
+        function buildReportData(submissions) {
+            if (!allData) return [];
+            const programsMap = new Map(allData.programs.map(p => [p.id, p.name]));
+            const batchesMap = new Map(allData.batches.map(b => [b.id, b.name]));
+            const sessionsMap = new Map(allData.sessions.map(s => [s.id, s.name]));
+            const subjectsMap = new Map(allData.subjects.map(s => [s.id, { code: s.code, name: s.name }]));
+            const facultiesMap = new Map(allData.faculties.map(f => [f.id, f.name]));
+            const reportData = [];
+            for (const sub of submissions) {
+                const assignment = allData.assignments.find(a => a.id === sub.assignment_id);
+                if (!assignment) continue;
+                reportData.push({
+                    program: { name: programsMap.get(assignment.program_id) || 'N/A' },
+                    batch: { name: batchesMap.get(assignment.batch_id) || 'N/A' },
+                    session: { name: sessionsMap.get(assignment.session_id) || 'N/A' },
+                    subject: subjectsMap.get(assignment.subject_id) || { code: 'N/A', name: 'N/A' },
+                    faculty: { name: facultiesMap.get(assignment.faculty_id) || 'N/A' },
+                    numCOs: sub.num_cos,
+                    articulationMatrix: sub.articulation_matrix_json || {},
+                    attainmentPercentages: sub.attainment_percentages_json || [],
+                    finalAttainmentMatrix: sub.final_attainment_matrix_json || {},
+                    poTotals: sub.po_totals_json || {}
+                });
+            }
+            return reportData;
+        }
+
+        document.getElementById('generate-report-btn').addEventListener('click', () => {
+            if (!allData) { showModal('Error', 'Data is still loading. Please wait.'); return; }
+            const programId = parseInt(document.getElementById('report-program').value);
+            const batchId = parseInt(document.getElementById('report-batch').value);
+            const sessionId = parseInt(document.getElementById('report-session').value);
+            if (!programId || !batchId || !sessionId) { showModal('Error', 'Please select Program, Batch, and Session.'); return; }
+            
+            const matchingAssignments = allData.assignments.filter(a => 
+                a.program_id === programId && 
+                a.batch_id === batchId && 
+                a.session_id === sessionId
+            );
+            const matchingAssignmentIds = new Set(matchingAssignments.map(a => a.id));
+            const filteredSubmissions = allData.submissions.filter(s => matchingAssignmentIds.has(s.assignment_id));
+
+            if (filteredSubmissions.length === 0) { showModal('No Data', 'No submissions found for the selected criteria.'); return; }
+            const reportData = buildReportData(filteredSubmissions);
+            generateExcelReports(reportData, "Filtered_Report");
+        });
+        
+        document.getElementById('generate-full-report-btn').addEventListener('click', () => {
+            if (!allData) { showModal('Error', 'Data is still loading. Please wait.'); return; }
+            if (allData.submissions.length === 0) { showModal('No Data', 'No submissions found in the database.'); return; }
+            const reportData = buildReportData(allData.submissions);
+            generateExcelReports(reportData, "Full_Data_Dump");
+        });
+
+        function generateExcelReports(data, reportName) {
+            const wb = XLSX.utils.book_new();
+            const commonHeaders = ['Program', 'Batch', 'Session', 'Course Code'];
+            
+            // Sheet 1: PO Attainment
+            const poSheetData = [ [...commonHeaders, ...Array.from({length: PO_COUNT}, (_, i) => `PO${i+1}`)] ];
+            data.forEach(sub => {
+                const row = [sub.program.name, sub.batch.name, sub.session.name, sub.subject.code];
+                for (let i = 1; i <= PO_COUNT; i++) { row.push((sub.poTotals && sub.poTotals[`PO${i}`]) || 0); }
+                poSheetData.push(row);
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(poSheetData), "PO Attainment");
+
+            // Sheet 2: Mapping
+            const mappingData = [ [...commonHeaders, 'Course Outcome', ...Array.from({length: PO_COUNT}, (_, i) => `PO${i+1}`)] ];
+            data.forEach(sub => {
+                for (let i = 1; i <= sub.numCOs; i++) {
+                    const row = [sub.program.name, sub.batch.name, sub.session.name, sub.subject.code, `CO${i}`];
+                    for (let j = 1; j <= PO_COUNT; j++) { row.push((sub.articulationMatrix && sub.articulationMatrix[`CO${i}-PO${j}`]) || 0); }
+                    mappingData.push(row);
+                }
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mappingData), "Mapping");
+
+            // Sheet 3: Attainment Percentage (REVISED)
+            const attainmentTypes = ['Internal', 'External', 'Indirect', 'Direct', 'Total'];
+            let attainmentPercHeaders = ['Program', 'Batch', 'Session', 'Course Code', 'Course Name'];
+            attainmentTypes.forEach(type => {
+                for(let i=1; i<=MAX_CO_COUNT; i++) {
+                    attainmentPercHeaders.push(`CO${i} ${type}`);
+                }
+            });
+            const attainmentPercData = [ attainmentPercHeaders ];
+            data.forEach(sub => {
+                let row = [sub.program.name, sub.batch.name, sub.session.name, sub.subject.code, sub.subject.name];
+                let coDataMap = new Map(sub.attainmentPercentages.map(item => [item.co, item]));
+
+                attainmentTypes.forEach(type => {
+                    for(let i=1; i<=MAX_CO_COUNT; i++) {
+                        const coData = coDataMap.get(`CO${i}`);
+                        row.push(coData ? coData[type.toLowerCase()] : '');
+                    }
+                });
+                attainmentPercData.push(row);
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(attainmentPercData), "Attainment Percentage");
+            
+            // Sheet 4: OBE Attainment Matrix
+            const obeMatrixData = [ [...commonHeaders, 'Course Outcome', ...Array.from({length: PO_COUNT}, (_, i) => `PO${i+1}`)] ];
+            data.forEach(sub => {
+                for (let i = 1; i <= sub.numCOs; i++) {
+                    const row = [sub.program.name, sub.batch.name, sub.session.name, sub.subject.code, `CO${i}`];
+                    for (let j = 1; j <= PO_COUNT; j++) {
+                        const val = sub.finalAttainmentMatrix && sub.finalAttainmentMatrix[`CO${i}-PO${j}`];
+                        row.push(val !== undefined ? val : '--');
+                    }
+                    obeMatrixData.push(row);
+                }
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(obeMatrixData), "OBE Attainment Matrix");
+            
+            XLSX.writeFile(wb, `OBE_Report_${reportName}.xlsx`);
+        }
+
+        // --- Start the app ---
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
