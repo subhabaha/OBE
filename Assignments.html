@@ -1,0 +1,234 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Assignment Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* blue-500 */
+            --primary-hover: #2563eb; /* blue-600 */
+            --secondary-color: #10b981; /* emerald-500 */
+            --secondary-hover: #059669; /* emerald-600 */
+            --neutral-bg: #f9fafb; /* gray-50 */
+            --text-primary: #1f2937; /* gray-800 */
+            --text-secondary: #4b5563; /* gray-600 */
+            --border-color: #e5e7eb; /* gray-200 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--neutral-bg);
+            color: var(--text-primary);
+            background-image: linear-gradient(to top, #e3eeff 0%, #f3e7e9 100%);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateY(0);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .loader {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-2xl mx-auto">
+        <div class="bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Faculty Assignment Portal</h1>
+                <p class="text-gray-600 text-lg">Assign subjects to faculty for a specific program, batch, and session.</p>
+            </div>
+
+            <form id="assignment-form" class="space-y-6">
+                <div>
+                    <label for="program-select" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                    <select id="program-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label for="batch-select" class="block text-sm font-medium text-gray-700 mb-1">Batch</label>
+                    <select id="batch-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label for="session-select" class="block text-sm font-medium text-gray-700 mb-1">Session</label>
+                    <select id="session-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label for="faculty-select" class="block text-sm font-medium text-gray-700 mb-1">Faculty Name</label>
+                    <select id="faculty-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div>
+                    <label for="subject-select" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <select id="subject-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                
+                <div class="pt-6 text-center">
+                    <button type="button" id="save-assignment-btn" class="btn btn-primary text-lg w-full md:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <span>Save Assignment</span>
+                    </button>
+                </div>
+            </form>
+             <div id="status-message" class="mt-6 text-center font-medium"></div>
+        </div>
+    </div>
+
+    <!-- Modal for messages -->
+    <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center" >
+        <div class="relative mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <div class="mt-3 text-center">
+                <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                     <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 id="modal-title" class="text-xl leading-6 font-bold text-gray-900 mt-4"></h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="modal-message" class="text-md text-gray-600"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="modal-ok-btn" class="btn btn-primary w-full">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const API_BASE_URL = 'https://101.53.149.101:3003/api';
+
+        // --- UI FUNCTIONS ---
+        function showModal(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('message-modal').style.display = 'flex';
+        }
+        
+        document.getElementById('modal-ok-btn').addEventListener('click', () => {
+            document.getElementById('message-modal').style.display = 'none';
+        });
+
+        function populateDropdown(elementId, data, placeholder, valueKey = 'id', textKey = 'name') {
+            const select = document.getElementById(elementId);
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+            if (!data) return;
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                select.appendChild(option);
+            });
+        }
+
+        function setStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.className = `mt-6 text-center font-medium ${isError ? 'text-red-600' : 'text-green-600'}`;
+        }
+
+        // --- DATA FETCHING AND INITIALIZATION ---
+        async function init() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/master-data`);
+                if (!response.ok) throw new Error('Failed to fetch initial data');
+                const data = await response.json();
+
+                populateDropdown('program-select', data.programs, 'Select a program');
+                populateDropdown('batch-select', data.batches, 'Select a batch');
+                populateDropdown('session-select', data.sessions, 'Select a session');
+                populateDropdown('faculty-select', data.faculties, 'Select a faculty');
+                populateDropdown('subject-select', data.subjects, 'Select a subject', 'id', 'name'); 
+                
+            } catch (error) {
+                console.error(error);
+                showModal('Connection Error', 'Could not connect to the server. Please ensure the backend server is running and try again.');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('save-assignment-btn').addEventListener('click', async () => {
+            const programId = document.getElementById('program-select').value;
+            const batchId = document.getElementById('batch-select').value;
+            const sessionId = document.getElementById('session-select').value;
+            const facultyId = document.getElementById('faculty-select').value;
+            const subjectId = document.getElementById('subject-select').value;
+
+            if (!programId || !batchId || !sessionId || !facultyId || !subjectId) {
+                showModal('Validation Error', 'Please make a selection in all dropdown fields.');
+                return;
+            }
+
+            const assignmentData = {
+                program_id: parseInt(programId),
+                batch_id: parseInt(batchId),
+                session_id: parseInt(sessionId),
+                faculty_id: parseInt(facultyId),
+                subject_id: parseInt(subjectId)
+            };
+            
+            const saveBtn = document.getElementById('save-assignment-btn');
+            const originalBtnContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = `<div class="loader"></div><span>Saving...</span>`;
+            saveBtn.disabled = true;
+            setStatus('');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/assignments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(assignmentData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Server responded with an error.');
+                }
+
+                const result = await response.json();
+                setStatus('Assignment saved successfully!');
+                // **FIX**: The .reset() method works on <form> elements.
+                document.getElementById('assignment-form').reset();
+
+            } catch (error) {
+                console.error('Save Assignment Error:', error);
+                setStatus(`Error: ${error.message}`, true);
+            } finally {
+                saveBtn.innerHTML = originalBtnContent;
+                saveBtn.disabled = false;
+            }
+        });
+
+        // --- Start the app ---
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
