@@ -137,17 +137,27 @@
             document.getElementById('message-modal').style.display = 'none';
         });
 
-        function populateDropdown(elementId, data, placeholder, valueKey = 'id', textKey = 'name') {
-            const select = document.getElementById(elementId);
-            select.innerHTML = `<option value="">${placeholder}</option>`;
-            if (!data) return;
-            data.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item[valueKey];
-                option.textContent = item[textKey];
-                select.appendChild(option);
-            });
+
+
+        function populateDropdown(elementId, data, placeholder, valueKey = 'id', textKey = 'name', codeKey = null) {
+    const select = document.getElementById(elementId);
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    if (!data) return;
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item[valueKey];
+
+        if (codeKey && item[codeKey]) {
+            option.textContent = `${item[codeKey]} - ${item[textKey]}`;
+        } else {
+            option.textContent = item[textKey];
         }
+
+        select.appendChild(option);
+    });
+}
+
 
         function setStatus(message, isError = false) {
             const statusDiv = document.getElementById('status-message');
@@ -166,7 +176,7 @@
                 populateDropdown('batch-select', data.batches, 'Select a batch');
                 populateDropdown('session-select', data.sessions, 'Select a session');
                 populateDropdown('faculty-select', data.faculties, 'Select a faculty');
-                populateDropdown('subject-select', data.subjects, 'Select a subject', 'id', 'name'); 
+                populateDropdown('subject-select', data.subjects, 'Select a subject', 'id', 'code','name'); 
                 
             } catch (error) {
                 console.error(error);
